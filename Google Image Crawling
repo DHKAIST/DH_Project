@@ -1,0 +1,50 @@
+# 이 코드 실행 전 아래 명령어를 터미널 창에 입력하여 모듈을 설치해야함.
+# pip install chromedriver-autoinstaller selenium
+
+import os
+import urllib.request as req
+from selenium import webdriver
+import chromedriver_autoinstaller
+import time
+import urllib.parse as par
+from selenium.webdriver.common.keys import Keys
+
+file_dir = "./구글이미지수집"
+if not os.path.exists(file_dir):
+    os.mkdir(file_dir)
+
+keyword = input("키워드 입력: ")
+encoded = par.quote(keyword)
+
+if not os.path.exists(file_dir+f"/{keyword}"):
+    os.mkdir(file_dir+f"/{keyword}")
+
+cp = chromedriver_autoinstaller.install()
+browser = webdriver.Chrome(cp)
+url = f"https://www.google.co.kr/search?q={encoded}&newwindow=1&sxsrf=AOaemvKeB72iuzI6DWe6ae5Ck1pvjw3RpQ:1633252899169&source=lnms&tbm=isch&sa=X&ved=2ahUKEwjyh4iX9a3zAhUKA94KHTQrDN8Q_AUoAXoECAEQAw&biw=2393&bih=1282&dpr=1.05"
+browser.get(url)
+time.sleep(4)
+img = browser.find_elements_by_css_selector("div.bRMDJf.islir > img")
+idx = 0
+
+while True:
+    try:
+        img_url = img[idx].get_attribute("src")
+    except:
+        try:
+            browser.find_element_by_css_selector("input.mye4qd").click()
+        except:
+            print("모든 이미지 크롤링 완료")
+            break
+        time.sleep(3)
+        img = browser.find_elements_by_css_selector("div.bRMDJf.islir > img")
+        continue
+    if img_url == None:
+        img_url = img[idx].get_attribute("data-src")
+    req.urlretrieve(img_url, file_dir + f"/{keyword}/{idx+1}.jpeg")
+    print(f"{keyword} 이미지 다운로드 완료 {idx+1}")
+    idx += 1
+    if idx % 48 == 0:
+        browser.find_element_by_css_selector("html").send_keys(Keys.END)
+        time.sleep(4)
+        img = browser.find_elements_by_css_selector("div.bRMDJf.islir > img")
